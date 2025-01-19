@@ -1,15 +1,76 @@
 import React, { useState, useEffect } from 'react';
 
-const TaskManagement = () => {
+const App = () => {
   const [tasks, setTasks] = useState({});
   const [isSaturday, setIsSaturday] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'student' or 'task'
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [modalType, setModalType] = useState(null);
   const [newStudent, setNewStudent] = useState({ id: '', name: '' });
   const [newTask, setNewTask] = useState({ id: '', name: '', baseValue: '' });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authCredentials, setAuthCredentials] = useState({
+    username: '',
+    password: ''
+  });
+  const [pendingAction, setPendingAction] = useState(null);
 
+  // Authentication function
+  const handleAuthentication = () => {
+    if (authCredentials.username === 'prajwal2403' &&
+      authCredentials.password === 'Prajwal@123') {
+      setIsAuthenticated(true);
+      setShowAuthModal(false);
+      setError(null);
+
+      // Execute pending action after successful authentication
+      if (pendingAction) {
+        switch (pendingAction.type) {
+          case 'reassign':
+            handleUpdateTasks();
+            break;
+          case 'addStudent':
+            setModalType('student');
+            setShowAddModal(true);
+            break;
+          case 'addTask':
+            setModalType('task');
+            setShowAddModal(true);
+            break;
+        }
+        setPendingAction(null);
+      }
+    } else {
+      setError('Invalid credentials. Please try again.');
+    }
+  };
+
+  // Protected action handler
+  const handleProtectedAction = (actionType) => {
+    if (!isAuthenticated) {
+      setPendingAction({ type: actionType });
+      setShowAuthModal(true);
+      return;
+    }
+
+    switch (actionType) {
+      case 'reassign':
+        handleUpdateTasks();
+        break;
+      case 'addStudent':
+        setModalType('student');
+        setShowAddModal(true);
+        break;
+      case 'addTask':
+        setModalType('task');
+        setShowAddModal(true);
+        break;
+    }
+  };
+
+  // Rest of the functionality
   const fetchTasks = async () => {
     try {
       setLoading(true);
@@ -90,26 +151,20 @@ const TaskManagement = () => {
             <h1 className="text-2xl font-bold text-gray-900">Task Management Dashboard</h1>
             <div className="flex gap-2">
               <button
-                onClick={handleUpdateTasks}
+                onClick={() => handleProtectedAction('reassign')}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
                 ↻ Reassign Tasks
               </button>
               <button
-                onClick={() => {
-                  setModalType('student');
-                  setShowAddModal(true);
-                }}
+                onClick={() => handleProtectedAction('addStudent')}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 + Add Student
               </button>
               <button
-                onClick={() => {
-                  setModalType('task');
-                  setShowAddModal(true);
-                }}
+                onClick={() => handleProtectedAction('addTask')}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 + Add Task
@@ -161,7 +216,56 @@ const TaskManagement = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Authentication Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Username"
+                value={authCredentials.username}
+                onChange={(e) => setAuthCredentials({
+                  ...authCredentials,
+                  username: e.target.value
+                })}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={authCredentials.password}
+                onChange={(e) => setAuthCredentials({
+                  ...authCredentials,
+                  password: e.target.value
+                })}
+                className="w-full px-3 py-2 border rounded-md"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAuthentication}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    setPendingAction(null);
+                    setAuthCredentials({ username: '', password: '' });
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -245,4 +349,4 @@ const TaskManagement = () => {
   );
 };
 
-export default TaskManagement;
+export default App;
