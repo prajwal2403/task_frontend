@@ -70,40 +70,48 @@ const App = () => {
     }
   };
 
-  // Rest of the functionality
+  // Fetch tasks from the backend
   const fetchTasks = async () => {
     try {
       setLoading(true);
       const response = await fetch('https://task-backend-5.onrender.com/tasks');
+      if (!response.ok) throw new Error('Failed to fetch tasks');
       const data = await response.json();
       setTasks(data);
 
       const satResponse = await fetch('https://task-backend-5.onrender.com/is-saturday');
+      if (!satResponse.ok) throw new Error('Failed to fetch Saturday status');
       const satData = await satResponse.json();
       setIsSaturday(satData.is_saturday);
     } catch (err) {
-      setError('Failed to fetch tasks. Please try again.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch tasks on component mount
   useEffect(() => {
     fetchTasks();
   }, []);
 
+  // Update tasks
   const handleUpdateTasks = async () => {
     try {
       setLoading(true);
-      await fetch('https://task-backend-5.onrender.com/update-tasks', { method: 'POST' });
-      await fetchTasks();
+      const response = await fetch('https://task-backend-5.onrender.com/update-tasks', {
+        method: 'POST',
+      });
+      if (!response.ok) throw new Error('Failed to update tasks');
+      await fetchTasks(); // Re-fetch tasks after update
     } catch (err) {
-      setError('Failed to update tasks. Please try again.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Add a new student
   const handleAddStudent = async () => {
     try {
       const response = await fetch('https://task-backend-5.onrender.com/add-student', {
@@ -115,14 +123,15 @@ const App = () => {
         }),
       });
       if (!response.ok) throw new Error('Failed to add student');
-      await fetchTasks();
+      await fetchTasks(); // Re-fetch tasks after adding a student
       setShowAddModal(false);
       setNewStudent({ id: '', name: '' });
     } catch (err) {
-      setError('Failed to add student. Please try again.');
+      setError(err.message);
     }
   };
 
+  // Add a new task
   const handleAddTask = async () => {
     try {
       const response = await fetch('https://task-backend-5.onrender.com/add-task', {
@@ -135,11 +144,11 @@ const App = () => {
         }),
       });
       if (!response.ok) throw new Error('Failed to add task');
-      await fetchTasks();
+      await fetchTasks(); // Re-fetch tasks after adding a task
       setShowAddModal(false);
       setNewTask({ id: '', name: '', baseValue: '' });
     } catch (err) {
-      setError('Failed to add task. Please try again.');
+      setError(err.message);
     }
   };
 
